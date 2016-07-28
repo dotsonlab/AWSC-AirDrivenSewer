@@ -33,6 +33,10 @@ void empty(){
     digitalWrite(3, HIGH);//drain
     digitalWrite(6, HIGH);//Vent
     while(valveCheck == false){ //wait for drain and vent valves to be closed
+      pinkdrain=digitalRead(4);
+      graydrain=digitalRead(5);
+      pinkvent=digitalRead(7);
+      grayvent=digitalRead(9);
       if ((graydrain==1) && (pinkdrain ==0) && (grayvent==1) && (pinkvent ==0)){
         valveCheck = true;
       }
@@ -50,6 +54,8 @@ void empty(){
     
     digitalWrite(14, LOW);//air
     while(valveCheck == false){ //wait for air to be closed
+      pinkair=digitalRead(15);
+      grayair=digitalRead(16);
       if ((pinkair==1) && (grayair==0)){
         valveCheck = true;
       }
@@ -58,7 +64,9 @@ void empty(){
     delay(wooshtime);//time for pressure o dissipate
     
     digitalWrite(6, LOW);//vent//when air is closed, open vent release pressrue
-    while(valveCheck == false){ 
+    while(valveCheck == false){
+      pinkvent=digitalRead(7);
+      grayvent=digitalRead(9); 
       if ((pinkvent==1) && (grayvent==0)){
         valveCheck = true;
       }
@@ -67,6 +75,8 @@ void empty(){
     
     digitalWrite(3, LOW);//drain
     while(valveCheck == false){ 
+      pinkdrain=digitalRead(4);
+      graydrain=digitalRead(5);
       if ((pinkdrain==1) && (graydrain==0)){
         valveCheck = true;
       }
