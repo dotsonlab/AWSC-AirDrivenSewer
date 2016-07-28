@@ -1,6 +1,7 @@
 //code for operation of system under sinks, shower and laundry in Alaska Sewer and Water challenge UAA team Pilot study
 int emptytime = 20000;//time to empty different per container
 int valvetime = 9000;
+int wooshtime = 10000;
 void setup() {
   // put your setup code here, to run once:
 //Serial.begin(9600);
@@ -44,13 +45,23 @@ else if(sensorValue ==1){  //empty cycle
   Serial.println("emptying");
     digitalWrite(3, HIGH);//drain
     digitalWrite(6, HIGH);//Vent
+    
+    
     delay(valvetime);//time to turn valve set at top of code
-    status();
+    //status();
     digitalWrite(14, HIGH);//air
     //status();
     delay(emptytime);//time to empty set at top of code
+    delay(emptytime);
+    delay(emptytime);
+    delay(emptytime);
+    delay(emptytime);
+    delay(emptytime);
+    delay(emptytime);//2min20sec
+    
     digitalWrite(14, LOW);//air
     delay(valvetime);// time to close air
+    delay(wooshtime);//time for pressure o dissipate
     digitalWrite(6, LOW);//vent//when air is closed, open vent release pressrue
     delay(valvetime); //and drain
     digitalWrite(3, LOW);//drain
