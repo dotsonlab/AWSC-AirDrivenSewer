@@ -1,7 +1,7 @@
 //code for operation of system under sinks, shower and laundry in Alaska Sewer and Water challenge UAA team Pilot study
 int emptytime = 20000;//time to empty different per container
 int valvetime = 9000;
-int wooshtime = 10000;
+int wooshtime = 20000;
 void setup() {
   // put your setup code here, to run once:
 //Serial.begin(9600);
@@ -27,6 +27,7 @@ void loop() {
   int grayvent=digitalRead(9);
   int pinkair=digitalRead(15);
   int grayair=digitalRead(16);
+  bool valveCheck = false;
 
   //status();//subroutine to read status of valves shown at bottom of code
 //Serial.print(sensorValue);
@@ -45,12 +46,14 @@ else if(sensorValue ==1){  //empty cycle
   Serial.println("emptying");
     digitalWrite(3, HIGH);//drain
     digitalWrite(6, HIGH);//Vent
+    while(valveCheck == false){ //wait for drain and vent valves to be closed
+      if ((graydrain==1) && (pinkdrain ==0) && (grayvent==1) && (pinkvent ==0)){
+        valveCheck = true;
+      }
+    }
+    valveCheck = false;
     
-    
-    delay(valvetime);//time to turn valve set at top of code
-    //status();
     digitalWrite(14, HIGH);//air
-    //status();
     delay(emptytime);//time to empty set at top of code
     delay(emptytime);
     delay(emptytime);
@@ -60,12 +63,29 @@ else if(sensorValue ==1){  //empty cycle
     delay(emptytime);//2min20sec
     
     digitalWrite(14, LOW);//air
-    delay(valvetime);// time to close air
-    delay(wooshtime);//time for pressure o dissipate
+    while(valveCheck == false){ //wait for air to be closed
+      if ((pinkair==1) && (grayair==0)){
+        valveCheck = true;
+      }
+    }
+    valveCheck = false;
+    delay(wooshtime);//time for pressure to dissipate
+    
     digitalWrite(6, LOW);//vent//when air is closed, open vent release pressrue
-    delay(valvetime); //and drain
+    while(valveCheck == false){ 
+      if ((pinkvent==1) && (grayvent==0)){
+        valveCheck = true;
+      }
+    }
+    valveCheck = false;
+    
     digitalWrite(3, LOW);//drain
-    delay(valvetime);// wait for vent and drain to open
+    while(valveCheck == false){ 
+      if ((pinkdrain==1) && (graydrain==0)){
+        valveCheck = true;
+      }
+    }
+    valveCheck = false;
   //}else{digitalWrite(4,LOW);}
 }
 
