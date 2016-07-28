@@ -1,6 +1,8 @@
 //code for operation of system under sinks, shower and laundry in Alaska Sewer and Water challenge UAA team Pilot study
 int emptytime = 20000;//time to empty different per container
-int wooshtime = 20000;
+int wooshtime = 10000;
+unsigned long timeofempty = 0;
+int trigger = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -18,32 +20,16 @@ void setup() {
     pinMode(17, INPUT);//sensor
 }
 
-void loop() {
-  delay(500);
-  int sensorValue = digitalRead(17);
-  int pinkdrain=digitalRead(4);
-  int graydrain=digitalRead(5);
-  int pinkvent=digitalRead(7);
-  int grayvent=digitalRead(9);
-  int pinkair=digitalRead(15);
-  int grayair=digitalRead(16);
-  bool valveCheck = false;
-
-  //status();//subroutine to read status of valves shown at bottom of code
-//Serial.print(sensorValue);
-//    digitalWrite(3, HIGH);//drain
-//    digitalWrite(6, HIGH);//Vent
-//    digitalWrite(14, HIGH);//air
-sensorValue = digitalRead(17);
-if (sensorValue ==0){
-  //when sensor is dry and air is closed
-     digitalWrite(3, LOW);//drain
-     digitalWrite(6, LOW);//Vent
-    digitalWrite(14, LOW);//air
-}
-
-else if(sensorValue ==1){  //empty cycle
-  Serial.println("emptying");
+void empty(){
+    int pinkdrain=digitalRead(4);
+    int graydrain=digitalRead(5);
+    int pinkvent=digitalRead(7);
+    int grayvent=digitalRead(9);
+    int pinkair=digitalRead(15);
+    int grayair=digitalRead(16);
+    bool valveCheck = false;
+    
+    Serial.println("emptying");
     digitalWrite(3, HIGH);//drain
     digitalWrite(6, HIGH);//Vent
     while(valveCheck == false){ //wait for drain and vent valves to be closed
@@ -69,7 +55,7 @@ else if(sensorValue ==1){  //empty cycle
       }
     }
     valveCheck = false;
-    delay(wooshtime);//time for pressure to dissipate
+    delay(wooshtime);//time for pressure o dissipate
     
     digitalWrite(6, LOW);//vent//when air is closed, open vent release pressrue
     while(valveCheck == false){ 
@@ -86,7 +72,28 @@ else if(sensorValue ==1){  //empty cycle
       }
     }
     valveCheck = false;
-  //}else{digitalWrite(4,LOW);}
+}
+
+void loop() {
+  delay(500);
+  int sensorValue = digitalRead(17);
+  unsigned long t = millis();
+  //status();//subroutine to read status of valves shown at bottom of code
+//Serial.print(sensorValue);
+//    digitalWrite(3, HIGH);//drain
+//    digitalWrite(6, HIGH);//Vent
+//    digitalWrite(14, HIGH);//air
+sensorValue = digitalRead(17);
+if (sensorValue == 1) 
+  {
+    trigger = 1;
+    empty();
+    timeofempty = millis();
+}
+else if (trigger == 1 && (t - timeofempty) >= 240000)
+  {
+    trigger = 0;
+    empty();
 }
 
 }
