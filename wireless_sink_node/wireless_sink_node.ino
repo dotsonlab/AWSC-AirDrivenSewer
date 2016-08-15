@@ -42,8 +42,9 @@
 #include <avr/wdt.h>
 #include <WirelessHEX69.h> //get it here: https://github.com/LowPowerLab/WirelessProgramming/tree/master/WirelessHEX69
 
-#define NODEID      2       // node ID used for this unit
 #define NETWORKID   164
+#define GATEWAYID   1
+#define NODEID      3       // node ID used for this unit
 //Match frequency to the hardware version of the radio on your Moteino (uncomment one):
 #define FREQUENCY   RF69_433MHZ
 //#define FREQUENCY   RF69_868MHZ
@@ -65,6 +66,9 @@
 RFM69 radio;
 char input = 0;
 long lastPeriod = -1;
+int TRANSMITPERIOD = 500; //transmit a packet to gateway so often (in ms)
+byte sendSize=0;
+boolean requestACK = false;
 int emptytime = 20000;//time to empty different per container
 int wooshtime = 20000;
 
@@ -77,6 +81,13 @@ int wooshtime = 20000;
 /////////////////////////////////////////////////////////////////////////////
 SPIFlash flash(FLASH_SS, 0xEF30); //EF30 for windbond 4mbit flash
 
+typedef struct {
+  int           nodeId; //store this nodeId
+  unsigned long uptime; //uptime in ms
+  float         data;   //temperature maybe?
+} Payload;
+Payload theData;
+
 void setup() {
   pinMode(LED, OUTPUT);
   Serial.begin(SERIAL_BAUD);
@@ -86,6 +97,9 @@ void setup() {
   radio.setHighPower(); //only for RFM69HW!
 #endif
   Serial.print("Start node...");
+  char buff[50];
+  sprintf(buff, "\nTransmitting at %d Mhz...", FREQUENCY==RF69_433MHZ ? 433 : FREQUENCY==RF69_868MHZ ? 868 : 915);
+  Serial.println(buff);
 
   if (flash.initialize())
     Serial.println("SPI Flash Init OK!");
@@ -244,9 +258,49 @@ void loop() {
     CheckForWirelessHEX(radio, flash, true);
     Serial.println();
   }
-  //else Serial.print('.');
+  
+  if (radio.receiveDone())
+  {
+    Serial.print('[');Serial.print(radio.SENDERID, DEC);Serial.print("] ");
+    for (byte i = 0; i < radio.DATALEN; i++)
+      Serial.print((char)radio.DATA[i]);
+    Serial.print("   [RX_RSSI:");Serial.print(radio.readRSSI());Serial.print("]");
 
+    if (radio.ACKRequested())
+    {
+      radio.sendACK();
+      Serial.print(" - ACK sent");
+      delay(10);
+    }
+    Blink(LED,5);
+    Serial.println();
+  }
+  
+  int currPeriod = millis()/TRANSMITPERIOD;
+  if (currPeriod != lastPeriod)
+  {
+    //fill in the struct with new values
+    theData.nodeId = NODEID;
+    theData.uptime = millis();
+    theData.data = 123.4;
+    
+    Serial.print("Sending struct (");
+    Serial.print(sizeof(theData));
+    Serial.print(" bytes) ... ");
+    if (radio.sendWithRetry(GATEWAYID, (const void*)(&theData), sizeof(theData)))
+      Serial.print(" ok!");
+    else Serial.print(" nothing...");
+    Serial.println();
+    Blink(LED,3);
+    lastPeriod=currPeriod;
+  }
   ////////////////////////////////////////////////////////////////////////////////////////////
-  // Real sketch code here, let's blink the onboard LED
-  //code for operation of system under sinks, shower and laundry in Alaska Sewer and Water challenge UAA team Pilot study
+}
+
+void Blink(byte PIN, int DELAY_MS)
+{
+  pinMode(PIN, OUTPUT);
+  digitalWrite(PIN,HIGH);
+  delay(DELAY_MS);
+  digitalWrite(PIN,LOW);
 }
